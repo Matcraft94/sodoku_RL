@@ -79,15 +79,46 @@ class SUdokuNet:
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.model = self.build_model().to(self.device)
 
+    # # build the neural network model
+    # def build_model(self):
+    #     model = torch.nn.Sequential(
+    #         torch.nn.Linear(81, 128),
+    #         torch.nn.ReLU(),
+    #         torch.nn.Linear(128, 81),
+    #         torch.nn.Sigmoid()
+    #     )
+    #     return model
     # build the neural network model
     def build_model(self):
-        model = torch.nn.Sequential(
-            torch.nn.Linear(81, 128),
-            torch.nn.ReLU(),
-            torch.nn.Linear(128, 81),
-            torch.nn.Sigmoid()
-        )
+        # Load the trained model from a file
+        model_file = "results/sudoku_RL_2023-04-22_23-38-15.pth"
+        model = torch.load(model_file)
         return model
+    
+    # play the Sudoku game
+    # def play_game(self):
+    #     print("Welcome to Sudoku!")
+    #     difficulty = input("Please select the difficulty level: Easy, Medium, or Hard: ")
+    #     game = Sudoku(difficulty)
+
+    #     while True:
+    #         print("Current game:")
+    #         game.display()
+    #         row = int(input("Please enter the row number (1-9): ")) - 1
+    #         col = int(input("Please enter the column number (1-9): ")) - 1
+    #         value = int(input("Please enter the value (1-9): "))
+    #         if game.grid[row][col] != 0:
+    #             print("That cell is already filled!")
+    #         elif not game.is_valid(game.grid, row, col, value):
+    #             print("Invalid move!")
+    #         else:
+    #             game.grid[row][col] = value
+    #             if game.grid == game.solution:
+    #                 print("Congratulations! You have solved the Sudoku!")
+    #                 return
+    #             elif all([all(row) for row in game.grid]):
+    #                 print("Sorry, you have failed to solve the Sudoku.")
+    #                 return
 
     # play the Sudoku game
     def play_game(self):
@@ -98,9 +129,12 @@ class SUdokuNet:
         while True:
             print("Current game:")
             game.display()
-            row = int(input("Please enter the row number (1-9): ")) - 1
-            col = int(input("Please enter the column number (1-9): ")) - 1
-            value = int(input("Please enter the value (1-9): "))
+
+            # Get the model's prediction
+            input_grid = torch.tensor(game.grid, dtype=torch.float32).flatten().to(self.device)
+            predicted_grid = self.model(input_grid).detach().cpu().numpy().reshape(9, 9)
+            row, col, value = self.get_prediction(predicted_grid, game.grid)
+
             if game.grid[row][col] != 0:
                 print("That cell is already filled!")
             elif not game.is_valid(game.grid, row, col, value):
@@ -108,12 +142,29 @@ class SUdokuNet:
             else:
                 game.grid[row][col] = value
                 if game.grid == game.solution:
-                    print("Congratulations! You have solved the Sudoku!")
+                    print("Congratulations! The AI has solved the Sudoku!")
                     return
                 elif all([all(row) for row in game.grid]):
-                    print("Sorry, you have failed to solve the Sudoku.")
+                    print("Sorry, the AI has failed to solve the Sudoku.")
                     return
 
+    # get the prediction from the model
+    def get_prediction(self, predicted_grid, current_grid):
+        max_diff = 0
+        row, col, value = -1, -1, -1
+
+        for i in range(9):
+            for j in range(9):
+                if current_grid[i][j] == 0:
+                    diff = predicted_grid[i][j] - current_grid[i][j]
+                    if diff > max_diff:
+                        max_diff = diff
+                        row, col, value = i, j, int(round(predicted_grid[i][j]))
+
+        return row, col, value
+
+    
+    
 # create an instance of the AgentGPT class and play the game
 agent = SUdokuNet()
 agent.play_game()

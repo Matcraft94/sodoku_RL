@@ -100,108 +100,61 @@ import torch.optim as optim
 from torch.autograd import Variable
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+class SudokuModelA(nn.Module):
+    def __init__(self):
+        super(SudokuModelA, self).__init__()
+        self.fc1 = nn.Linear(81, 128)
+        self.fc2 = nn.Linear(128, 128)
+        self.fc3 = nn.Linear(128, 81)
 
-# class SudokuNet(nn.Module):
-#     def __init__(self):
-#         super(SudokuNet, self).__init__()
-#         self.fc1 = nn.Linear(81, 128)
-#         self.fc2 = nn.Linear(128, 81)
+    def forward(self, x):
+        x = nn.functional.relu(self.fc1(x))
+        x = nn.functional.relu(self.fc2(x))
+        x = self.fc3(x)
+        return x
+
+class SudokuModelB(nn.Module):
+    def __init__(self):
+        super(SudokuModelB, self).__init__()
+        self.fc1 = nn.Linear(81, 256)
+        self.fc2 = nn.Linear(256, 256)
+        self.fc3 = nn.Linear(256, 81)
+
+    def forward(self, x):
+        x = nn.functional.relu(self.fc1(x))
+        x = nn.functional.relu(self.fc2(x))
+        x = self.fc3(x)
+        return x
+
+class SudokuModelC(nn.Module):
+    def __init__(self):
+        super(SudokuModelC, self).__init__()
+        self.fc1 = nn.Linear(81, 512)
+        self.fc2 = nn.Linear(512, 512)
+        self.fc3 = nn.Linear(512, 81)
+
+    def forward(self, x):
+        x = nn.functional.relu(self.fc1(x))
+        x = nn.functional.relu(self.fc2(x))
+        x = self.fc3(x)
+        return x
+
+class SudokuModelD(nn.Module):
+    def __init__(self):
+        super(SudokuModelD, self).__init__()
+        self.fc1 = nn.Linear(81, 1024)
+        self.fc2 = nn.Linear(1024, 1024)
+        self.fc3 = nn.Linear(1024, 81)
+
+    def forward(self, x):
+        x = nn.functional.relu(self.fc1(x))
+        x = nn.functional.relu(self.fc2(x))
+        x = self.fc3(x)
+        return x
     
-#     def forward(self, x):
-#         x = x.view(-1, 81)
-#         x = torch.relu(self.fc1(x))
-#         x = self.fc2(x)
-#         return x.view(-1, 9, 9)
-
-# class SudokuNet(nn.Module):
-#     def __init__(self):
-#         super(SudokuNet, self).__init__()
-        
-#         self.conv1 = nn.Conv2d(1, 64, kernel_size=3, padding=1)
-#         self.conv2 = nn.Conv2d(64, 128, kernel_size=3, padding=1)
-#         self.conv3 = nn.Conv2d(128, 256, kernel_size=3, padding=1)
-
-#         self.fc1 = nn.Linear(256 * 3 * 3, 1024)
-#         self.fc2 = nn.Linear(1024, 512)
-#         self.fc3 = nn.Linear(512, 256)
-#         self.fc4 = nn.Linear(256, 81)
-    
-#     def forward(self, x):
-#         x = x.view(-1, 1, 9, 9)
-
-#         x = torch.relu(self.conv1(x))
-#         x = torch.relu(self.conv2(x))
-#         x = torch.relu(self.conv3(x))
-        
-#         x = x.view(-1, 256 * 3 * 3)
-
-#         x = torch.relu(self.fc1(x))
-#         x = torch.relu(self.fc2(x))
-#         x = torch.relu(self.fc3(x))
-#         x = self.fc4(x)
-
-#         return x.view(-1, 9, 9)
-
-# class SudokuNetGRU(nn.Module):
-#     def __init__(self):
-#         super(SudokuNetGRU, self).__init__()
-
-#         self.conv1 = nn.Conv2d(1, 64, kernel_size=3, padding=1)
-#         self.conv2 = nn.Conv2d(64, 128, kernel_size=3, padding=1)
-
-#         self.gru = nn.GRU(128, 256, batch_first=True)
-
-#         self.fc1 = nn.Linear(256, 128)
-#         self.fc2 = nn.Linear(128, 81)
-
-#     def forward(self, x):
-#         x = x.view(-1, 1, 9, 9)
-
-#         x = torch.relu(self.conv1(x))
-#         x = torch.relu(self.conv2(x))
-
-#         x = x.view(-1, 9, 128)
-
-#         _, h_n = self.gru(x)
-#         x = h_n[-1]
-
-#         x = torch.relu(self.fc1(x))
-#         x = self.fc2(x)
-
-#         return x.view(-1, 9, 9)
-
-# class SudokuNetLSTM(nn.Module):
-#     def __init__(self):
-#         super(SudokuNetLSTM, self).__init__()
-
-#         self.conv1 = nn.Conv2d(1, 64, kernel_size=3, padding=1)
-#         self.conv2 = nn.Conv2d(64, 128, kernel_size=3, padding=1)
-
-#         self.lstm = nn.LSTM(128, 256, batch_first=True)
-
-#         self.fc1 = nn.Linear(256, 128)
-#         self.fc2 = nn.Linear(128, 81)
-
-#     def forward(self, x):
-#         x = x.view(-1, 1, 9, 9)
-
-#         x = torch.relu(self.conv1(x))
-#         x = torch.relu(self.conv2(x))
-
-#         x = x.view(-1, 9, 128)
-
-#         _, (h_n, _) = self.lstm(x)
-#         x = h_n[-1]
-
-#         x = torch.relu(self.fc1(x))
-#         x = self.fc2(x)
-
-#         return x.view(-1, 9, 9)    
-
-
-class SudokuNet(nn.Module):
+class SudokuModel(nn.Module):
     def __init__(self, arch_type):
-        super(SudokuNet, self).__init__()
+        super(SudokuModel, self).__init__()
 
         self.arch_type = arch_type
 
@@ -381,7 +334,7 @@ if __name__ == '__main__':
     arch_type = 4
     
     env = SudokuEnv()
-    net = SudokuNet(arch_type).to(device)
+    net = SudokuModel(arch_type).to(device)
     input_size = (1, 9, 9)
     summary(net, input_size)
 
