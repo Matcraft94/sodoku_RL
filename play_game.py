@@ -1,3 +1,6 @@
+# Creado por Lucy
+# Fecha: 2023/04/08
+
 # import necessary libraries
 import torch
 import numpy as np

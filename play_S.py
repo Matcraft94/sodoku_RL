@@ -1,3 +1,6 @@
+# Creado por Lucy
+# Fecha: 2023/04/29
+
 import time
 import torch
 import numpy as np
@@ -199,11 +202,22 @@ class ChatSudokuSolver:
                 formatted += '---------------------\n'
         return formatted
     
-    def get_prediction(self, grid):
+    # def get_prediction(self, grid):
+    #     input_grid = torch.tensor(grid, dtype=torch.float32).flatten().to(self.device)
+    #     predicted_grid = self.sudoku_solver.model(input_grid).detach().cpu().numpy().reshape(9, 9)
+    #     row, col, value = self.sudoku_solver.get_sudoku_prediction(predicted_grid, grid)
+    #     return row, col, value
+    def get_prediction(self, grid, game):
         input_grid = torch.tensor(grid, dtype=torch.float32).flatten().to(self.device)
         predicted_grid = self.sudoku_solver.model(input_grid).detach().cpu().numpy().reshape(9, 9)
         row, col, value = self.sudoku_solver.get_sudoku_prediction(predicted_grid, grid)
+
+        # Verifica que el valor predicho sea válido antes de retornarlo
+        while not game.is_valid(grid, row, col, value):
+            value = (value % 9) + 1
+
         return row, col, value
+
 
 
 class SudokuGUI:
@@ -243,6 +257,31 @@ class SudokuGUI:
         back_button = tk.Button(button_frame, text="Back", command=self.back_step)
         back_button.grid(row=0, column=1, padx=5)
 
+    # def start_game(self):
+    #     difficulty = input("Please select the difficulty level: Easy, Medium, or Hard: ")
+    #     game = Sudoku(difficulty)
+    #     self.game = game
+    #     self.grid_history = [deepcopy(game.grid)]
+    #     self.current_step = 0
+    #     self.update_grid()
+
+    #     while not self.is_solved():
+    #         valid_move = False
+    #         while not valid_move:
+    #             row, col, value = self.chat_solver.get_prediction(game.grid)
+    #             if game.is_valid(game.grid, row, col, value):  # Comprueba si el movimiento es válido
+    #                 valid_move = True
+    #             else:
+    #                 # Cambia de estrategia: explora diferentes valores en la misma celda
+    #                 game.grid[row][col] = (game.grid[row][col] % 9) + 1
+
+    #         game.grid[row][col] = value
+    #         self.grid_history.append(deepcopy(game.grid))
+    #         self.current_step += 1
+    #         self.update_grid()
+    #         self.root.update_idletasks()
+    #         self.root.update()
+    #         time.sleep(0.1)
     def start_game(self):
         difficulty = input("Please select the difficulty level: Easy, Medium, or Hard: ")
         game = Sudoku(difficulty)
@@ -254,7 +293,7 @@ class SudokuGUI:
         while not self.is_solved():
             valid_move = False
             while not valid_move:
-                row, col, value = self.chat_solver.get_prediction(game.grid)
+                row, col, value = self.chat_solver.get_prediction(game.grid, game)
                 if game.is_valid(game.grid, row, col, value):  # Comprueba si el movimiento es válido
                     valid_move = True
                 else:
@@ -268,6 +307,7 @@ class SudokuGUI:
             self.root.update_idletasks()
             self.root.update()
             time.sleep(0.1)
+
 
     def back_step(self):
         if self.current_step > 0:
